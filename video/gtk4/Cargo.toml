@@ -9,6 +9,8 @@ rust-version.workspace = true
 description = "GStreamer GTK 4 sink element"
 
 [dependencies]
+glib.workspace = true
+gio.workspace = true
 gtk.workspace = true
 gdk-wayland = { workspace = true, optional = true}
 gdk-x11 = { workspace = true, optional = true}
