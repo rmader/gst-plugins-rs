@@ -9,7 +9,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-use gst_video::prelude::*;
+use gst_video::*;
 
 use gst_gl::prelude::*;
 use gtk::{gdk, glib};
@@ -409,6 +409,42 @@ fn video_frame_to_dmabuf_texture(
     builder.set_width(width);
     builder.set_height(height);
     builder.set_n_planes(n_planes);
+
+    #[cfg(feature = "gtk_v4_16")]
+    {
+        let color_params = gdk::CicpParams::new();
+
+        if info.colorimetry().primaries() == VideoColorPrimaries::Unknown {
+            color_params.set_color_primaries(1); // BT.709 / sRGB
+        } else {
+            color_params.set_color_primaries(info.colorimetry().primaries().to_iso());
+        }
+
+        if info.colorimetry().transfer() == VideoTransferFunction::Unknown {
+            color_params.set_transfer_function(13); // sRGB
+        } else {
+            color_params.set_transfer_function(info.colorimetry().transfer().to_iso());
+        }
+
+        /* TODO: implement in GTK
+        color_params.set_matrix_coefficients(info.colorimetry().matrix().to_iso());
+
+        let range = match info.colorimetry().range() {
+            VideoColorRange::Range16_235 => gdk::CicpRange::Narrow,
+            _ => gdk::CicpRange::Full,
+        };
+        color_params.set_range(range);
+        */
+
+        color_params.set_matrix_coefficients(0); // RGB
+        color_params.set_range(gdk::CicpRange::Full);
+
+        match color_params.build_color_state() {
+            Ok(color_state) => builder.set_color_state(Some(color_state).as_ref()),
+            Err(error) => println!("Could not build color state: {}", error),
+        }
+    }
+
     for plane in 0..(n_planes as usize) {
         builder.set_fd(plane as u32, fds[plane]);
         builder.set_offset(plane as u32, offsets[plane] as u32);
