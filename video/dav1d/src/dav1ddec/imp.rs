@@ -309,16 +309,9 @@ impl Dav1dDec {
         let mut update_output_state = false;
 
         let colorimetry = self.colorimetry_from_dav1d_picture(pic);
-        if !input_structure.has_field("colorimetry")
-            || input_colorimetry.range() == gst_video::VideoColorRange::Unknown
-            || input_colorimetry.matrix() == gst_video::VideoColorMatrix::Unknown
-            || input_colorimetry.transfer() == gst_video::VideoTransferFunction::Unknown
-            || input_colorimetry.primaries() == gst_video::VideoColorPrimaries::Unknown
-        {
-            if let Some(colorimetry) = colorimetry.as_ref() {
-                info_builder = info_builder.colorimetry(colorimetry);
-                update_output_state = true;
-            }
+        if let Some(colorimetry) = colorimetry.as_ref() {
+            info_builder = info_builder.colorimetry(colorimetry);
+            update_output_state = true;
         }
 
         if !input_structure.has_field("chroma-site") {
